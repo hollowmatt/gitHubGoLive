@@ -21,20 +21,26 @@ func initOauthConfig() {
 		ClientSecret: os.Getenv("ghsecret"),
 		Scopes:       []string{"repo", "user"},
 		Endpoint: oauth2.Endpoint{
-			TokenURL: "https://github.com/login/oauth/authorize",
+			TokenURL: "https://github.com/login/oauth/access_token",
 			AuthURL:  "http://localhost:8080/github/callback",
 		},
 	}
 	log.Printf("Client: %s, Secret: %s ", oauthConf.ClientID, oauthConf.ClientSecret)
 }
 
+func registerHandlers(mux *http.ServeMux) {
+	//handlers
+	mux.HandleFunc("/", indexHandler)
+	mux.HandleFunc("/github/callback", githubCallbackHandler)
+}
+
 func main() {
 	//setup Oath Configuration from GitHub
 	initOauthConfig()
 
-	//handlers
-	http.HandleFunc("/", indexHandler)
-	http.HandleFunc("/github/callback", githubCallbackHandler)
+	//Setup handlers
+	mux := http.NewServeMux()
+	registerHandlers(mux)
 
 	//start web server
 	http.ListenAndServe(":8080", nil)
