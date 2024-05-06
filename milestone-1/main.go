@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"os"
 
@@ -12,14 +11,6 @@ var conf = &oauth2.Config{
 	ClientID:     os.Getenv("ghclient"),
 	ClientSecret: os.Getenv("ghsecret"),
 	Scopes:       []string{"repo", "user"},
-}
-
-func indexHandler(writer http.ResponseWriter, request *http.Request) {
-	fmt.Fprintf(writer, "Hello World, %s!", request.URL.Path[1:])
-}
-
-func githubCallbackHandler(writer http.ResponseWriter, request *http.Request) {
-	fmt.Fprintf(writer, "Hello callback, %s!", request.URL.Path[1:])
 }
 
 func main() {
