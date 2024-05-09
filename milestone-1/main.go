@@ -43,5 +43,5 @@ func main() {
 	registerHandlers(mux)
 
 	//start web server
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":8080", mux)
 }
