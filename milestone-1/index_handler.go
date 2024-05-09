@@ -1,28 +1,26 @@
 package main
 
 import (
-	"errors"
 	"fmt"
-	"log"
 	"net/http"
 )
 
 func indexHandler(writer http.ResponseWriter, request *http.Request) {
-	fmt.Fprintf(writer, "Hello World, %s!", request.URL.Path[1:])
 	// Check for session HTTTP cookie in the request
-	cookie, err := request.Cookie("Session")
-	if err != nil {
-		switch {
-		case errors.Is(err, http.ErrNoCookie):
-			// initiate GitHub authentication process
-			http.Error(writer, "cookie not found", http.StatusBadRequest)
-		default:
-			log.Println(err)
-			http.Error(writer, "server error", http.StatusInternalServerError)
+	cookie, cErr := getSession(request)
+	// If no cookie, initiate GitHub Auth
+	if cErr != nil {
+		//create a session
+		stateToken, sErr := getRandomString()
+		if sErr != nil {
+			http.Error(writer, "Internal server error", http.StatusInternalServerError)
 		}
+		githubLoginUrl := oauthConf.AuthCodeURL(stateToken)
+		setCookie(writer, oauthStateCookie, stateToken, 600)
+		http.Redirect(writer, request, githubLoginUrl, http.StatusTemporaryRedirect)
 		return
 	}
-	// If cookie present and it's value a valid session identifier,
 	// return successful response
-	writer.Write([]byte(cookie.Value))
+	fmt.Fprintf(writer, "Successfully authorized to access GitHub on your behalf: %v", sessionStore[cookie.ID].Login)
+
 }
