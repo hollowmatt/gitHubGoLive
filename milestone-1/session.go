@@ -1,10 +1,14 @@
 package main
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
 	"net/http"
+
+	"github.com/google/go-github/github"
+	"golang.org/x/oauth2"
 )
 
 type userData struct {
@@ -40,12 +44,33 @@ func validSessionID(sessionID string) bool {
 	return ok
 }
 
-// stub create a session
-func createSession(token string) (string, error) {
-	return token, nil
+// create a session
+func createSession(ctx context.Context, token string) (*sessionData, error) {
+
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: token},
+	)
+	tc := oauth2.NewClient(ctx, ts)
+	ghClient := github.NewClient(tc)
+
+	u, _, err := ghClient.Users.Get(ctx, "")
+	if err != nil {
+		return nil, err
+	}
+	sessionId, err := getRandomString()
+	if err != nil {
+		return nil, err
+	}
+	sessionStore[sessionId] = userData{
+		Login:       *u.Login,
+		accessToken: token,
+	}
+	return &sessionData{
+		ID: sessionId,
+	}, nil
 }
 
-// stub get a session
+// get a session
 func getSession(req *http.Request) (*sessionData, error) {
 	cookie, err := req.Cookie(sessionCookie)
 	if err != nil {
@@ -57,6 +82,20 @@ func getSession(req *http.Request) (*sessionData, error) {
 		return nil, fmt.Errorf("Invalid session ID")
 	}
 	return &sessionData{ID: cookie.Value}, nil
+}
+
+func validCallback(r *http.Request) bool {
+
+	gotState := r.URL.Query().Get("state")
+	c, err := r.Cookie(oauthStateCookie)
+	if err != nil {
+		return false
+	}
+	if c.Value != gotState {
+		return false
+	}
+
+	return true
 }
 
 func setCookie(writer http.ResponseWriter, name, value string, maxAge int) {
