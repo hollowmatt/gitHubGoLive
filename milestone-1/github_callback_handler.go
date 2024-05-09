@@ -5,6 +5,12 @@ import (
 	"net/http"
 )
 
+//Request items
+//client_id=Ov23liAX977YLzZPwpEl
+//response_type=code
+//scope=repo+user
+//state=SJF3sAV3oZsEwrIFyfDLweFXlVrU3JI%2BbngCq3UmxCE%3D
+
 func githubCallbackHandler(writer http.ResponseWriter, request *http.Request) {
 	fmt.Fprintf(writer, "Hello callback, %s!", request.URL.Path[1:])
 
